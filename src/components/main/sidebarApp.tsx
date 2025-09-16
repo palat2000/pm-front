@@ -1,5 +1,4 @@
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
-
+"use client";
 import {
   Sidebar,
   SidebarContent,
@@ -11,50 +10,69 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import { useStore } from "zustand";
+import { userStore } from "@/stores/user-store";
+import { useEffect, useState } from "react";
+import axios from "@/config/axios";
+import { Project, projectStore } from "@/stores/project-store";
 
 export default function SidebarApp() {
-  const items = [
-    {
-      title: "Home",
-      url: "#",
-      icon: Home,
-    },
-    {
-      title: "Inbox",
-      url: "#",
-      icon: Inbox,
-    },
-    {
-      title: "Calendar",
-      url: "#",
-      icon: Calendar,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: Search,
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings,
-    },
-  ];
+  const user = useStore(userStore, (s) => s.user);
+  const selectProject = useStore(projectStore, (s) => s.selectProject);
+  const projectSelected = useStore(projectStore, (s) => s.projectSelected);
+  const [items, setItems] = useState<Project[]>([]);
+  const onSelectProject = (id: number) => {
+    if (projectSelected?.id === id) {
+      return;
+    }
+    const item = items.filter((f) => f.id === id)[0];
+    selectProject(item);
+  };
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      const response = await axios.get("/projects", {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+      });
+      const projects = response.data.map(
+        (item: any): Project => ({
+          description: item.description,
+          id: item.id,
+          name: item.name,
+          members: item.members,
+          boards: item.boards,
+        })
+      );
+      setItems(projects);
+    };
+    if (user) {
+      fetchItems();
+    }
+  }, [user]);
+
   return (
     <Sidebar>
       <SidebarContent>
         <div className="p-2">
           <SidebarGroup>
-            <SidebarGroupLabel>Application</SidebarGroupLabel>
+            <SidebarGroupLabel>Project</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <a href={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </a>
+                  <SidebarMenuItem
+                    key={item.id}
+                    onClick={() => {
+                      onSelectProject(item.id);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <SidebarMenuButton
+                      asChild
+                      isActive={item.id === projectSelected?.id}
+                    >
+                      <span>{item.name}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
