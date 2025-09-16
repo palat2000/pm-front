@@ -92,7 +92,7 @@ export default function TaskDialog({
       setSubmitCommentLoading(true);
       const body = {
         content: newComment,
-        taskId: task!.id,
+        taskId: editedTask!.id,
       };
       const res = await axios.post("comments", body, {
         headers: {
@@ -118,6 +118,7 @@ export default function TaskDialog({
   };
 
   useEffect(() => {
+    setComments([]);
     if (task && task.id) {
       const fetchTask = async () => {
         try {
