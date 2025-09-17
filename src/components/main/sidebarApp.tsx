@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { useStore } from "zustand";
 import { userStore } from "@/stores/user-store";
 import { useEffect, useState } from "react";
-import axios from "@/config/axios";
+import axios from "@/lib/axios";
 import { Project, projectStore } from "@/stores/project-store";
 
 export default function SidebarApp() {
@@ -31,11 +31,7 @@ export default function SidebarApp() {
 
   useEffect(() => {
     const fetchItems = async () => {
-      const response = await axios.get("/projects", {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      const response = await axios.get("/projects");
       const projects = response.data.map(
         (item: any): Project => ({
           description: item.description,

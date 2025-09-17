@@ -25,7 +25,7 @@ export default async function MainLayout({
           {children}
         </div>
       </SidebarProvider>
-      <HydrateUser token={token} />
+      <HydrateUser />
     </>
   );
 }

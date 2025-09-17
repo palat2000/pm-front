@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Comment, Task } from "@/stores/project-store";
 import { useEffect, useState } from "react";
-import axios from "@/config/axios";
+import axios from "@/lib/axios";
 import { useStore } from "zustand";
 import { userStore } from "@/stores/user-store";
 import { UserDdl } from "@/model/userDdl";
@@ -37,11 +37,7 @@ export default function TaskDialog({
   const createTask = async () => {
     try {
       setSubmitLoading(true);
-      const res = await axios.post("tasks", editedTask, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      const res = await axios.post("tasks", editedTask);
       setEditedTask({
         ...editedTask!,
         id: res.data.id,
@@ -59,11 +55,7 @@ export default function TaskDialog({
   const updateTask = async () => {
     try {
       setSubmitLoading(true);
-      const res = await axios.put(`tasks/${editedTask!.id}`, editedTask, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      const res = await axios.put(`tasks/${editedTask!.id}`, editedTask);
       setEditedTask({
         ...editedTask!,
         id: res.data.id,
@@ -94,11 +86,7 @@ export default function TaskDialog({
         content: newComment,
         taskId: editedTask!.id,
       };
-      const res = await axios.post("comments", body, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      const res = await axios.post("comments", body);
       const newCommentData: Comment = {
         id: res.data.id,
         name: res.data.name || "",
@@ -123,11 +111,7 @@ export default function TaskDialog({
       const fetchTask = async () => {
         try {
           setIsLoading(true);
-          const res = await axios.get(`tasks/${task.id}`, {
-            headers: {
-              Authorization: `Bearer ${user?.token}`,
-            },
-          });
+          const res = await axios.get(`tasks/${task.id}`);
           setEditedTask({
             assigneeId: res.data.assigneeId,
             columnId: res.data.columnId,
@@ -169,11 +153,7 @@ export default function TaskDialog({
     if (projectId > 0) {
       const fetchAssignees = async () => {
         try {
-          const res = await axios.get(`users/project-members/${projectId}`, {
-            headers: {
-              Authorization: `Bearer ${user?.token}`,
-            },
-          });
+          const res = await axios.get(`users/project-members/${projectId}`);
           setAssignees(res.data);
         } catch (err) {
           console.log(err);

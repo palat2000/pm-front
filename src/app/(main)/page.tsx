@@ -8,7 +8,7 @@ import { userStore } from "@/stores/user-store";
 import { useEffect } from "react";
 import { Column, projectStore } from "@/stores/project-store";
 import { useState } from "react";
-import axios from "@/config/axios";
+import axios from "@/lib/axios";
 import TaskDialog from "@/components/main/taskDialog";
 import { Task } from "@/stores/project-store";
 
@@ -27,11 +27,7 @@ export default function Page() {
     if (projectSelected) {
       const board = projectSelected.boards[0];
       const fetchColumns = async () => {
-        const response = await axios.get(`/columns/board/${board.id}`, {
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
-        });
+        const response = await axios.get(`/columns/board/${board.id}`);
         const columns = response.data;
         setColumns(columns);
       };

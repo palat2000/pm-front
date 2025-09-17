@@ -11,7 +11,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { cn } from "@/lib/utils";
 import { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import Cookie from "js-cookie";
+import axios from "@/lib/axios";
 
 const loginSchema = z.object({
   username: z.string().min(3, "ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร"),
@@ -53,16 +54,24 @@ export default function Page() {
     return "confirmPassword" in data;
   };
 
+  const setToken = (token: string, expiresIn: number) => {
+    Cookie.set("token", token, {
+      expires: new Date(new Date().getTime() + expiresIn * 1000 - 30000),
+    });
+  };
+
   const onSubmit = async (data: LoginForm | RegisterForm) => {
     try {
       setIsLoading(true);
       setFormError("");
 
       if (isRegister && isRegisterForm(data)) {
-        await axios.post("/api/register", data);
+        const res = await axios.post("/api/register", data);
+        setToken(res.data.token, res.data.expiresIn);
         router.push("/");
       } else {
-        await axios.post("/api/login", data);
+        const res = await axios.post("/users/auth/login", data);
+        setToken(res.data.token, res.data.expiresIn);
         router.push("/");
       }
     } catch (error: any) {
