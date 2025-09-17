@@ -4,21 +4,24 @@ import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Plus, Users } from "lucide-react";
 import { useStore } from "zustand";
-import { userStore } from "@/stores/user-store";
 import { useEffect } from "react";
-import { Column, projectStore } from "@/stores/project-store";
+import { Column, projectStore, TaskCard } from "@/stores/project-store";
 import { useState } from "react";
 import axios from "@/lib/axios";
 import TaskDialog from "@/components/main/taskDialog";
-import { Task } from "@/stores/project-store";
 
 export default function Page() {
-  const user = useStore(userStore, (s) => s.user);
   const projectSelected = useStore(projectStore, (s) => s.projectSelected);
-  const [columns, setColumns] = useState<Column[]>([]);
-  const [taskSelected, setTaskSelected] = useState<Task | null>({} as Task);
+  const setSelectedBoardColumns = useStore(
+    projectStore,
+    (s) => s.setSelectedBoardColumns
+  );
+  const columns = useStore(projectStore, (s) => s.boardSelectedColumns);
+  const [taskSelected, setTaskSelected] = useState<TaskCard | null>(
+    {} as TaskCard
+  );
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
-  const onSelectTask = (task: Task) => {
+  const onSelectTask = (task: TaskCard) => {
     setIsTaskDialogOpen(true);
     setTaskSelected(task);
   };
@@ -29,7 +32,7 @@ export default function Page() {
       const fetchColumns = async () => {
         const response = await axios.get(`/columns/board/${board.id}`);
         const columns = response.data;
-        setColumns(columns);
+        setSelectedBoardColumns(columns);
       };
       fetchColumns();
     }

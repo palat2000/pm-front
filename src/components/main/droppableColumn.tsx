@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import DraggableTask from "@/components/main/draggableTask";
-import { Column, Task } from "@/stores/project-store";
+import { Column, TaskCard } from "@/stores/project-store";
 import { Separator } from "@/components/ui/separator";
 
 export default function DroppableColumn({
@@ -16,7 +16,7 @@ export default function DroppableColumn({
   onSelectTask,
 }: {
   column: Column;
-  onSelectTask: (task: Task) => void;
+  onSelectTask: (task: TaskCard) => void;
 }) {
   return (
     <Card
@@ -40,9 +40,6 @@ export default function DroppableColumn({
               onSelectTask={onSelectTask}
             />
           ))}
-          {/* {column.tasks.map((task) => (
-          <DraggableTask key={task.id} task={task} onTaskClick={onTaskClick} />
-        ))} */}
         </CardContent>
       )}
       <Separator className="my-1" />
@@ -53,15 +50,12 @@ export default function DroppableColumn({
           onClick={() =>
             onSelectTask({
               id: 0,
-              title: "",
+              assigneeId: null,
+              assigneeName: "",
+              columnId: column.id,
               description: "",
               dueDate: null,
-              assigneeId: null,
-              columnId: column.id,
-              createBy: null,
-              createAt: null,
-              updateBy: null,
-              updateAt: null,
+              title: "",
             })
           }
         >

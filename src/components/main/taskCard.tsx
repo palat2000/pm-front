@@ -1,16 +1,15 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Calendar } from "lucide-react";
-import { Task } from "@/stores/project-store";
+import { TaskCard as TaskCardModel } from "@/stores/project-store";
 
 export default function TaskCard({
   task,
   onSelectTask,
 }: {
-  task: Task;
-  onSelectTask: (task: Task) => void;
+  task: TaskCardModel;
+  onSelectTask: (task: TaskCardModel) => void;
 }) {
-  let name = "Pond";
   return (
     <Card
       className={`cursor-pointer hover:shadow-md transition-all duration-200`}
@@ -26,24 +25,31 @@ export default function TaskCard({
           </div>
           <div className="flex justify-between">
             <div className="flex items-center gap-2">
-              <Avatar className="w-6 h-6">
-                <AvatarFallback className="text-xs">
-                  {name.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-sm text-muted-foreground">{name}</span>
+              {task.assigneeName && (
+                <>
+                  <Avatar className="w-6 h-6">
+                    <AvatarFallback className="text-xs">
+                      {task.assigneeName.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm text-muted-foreground">
+                    {task.assigneeName}
+                  </span>
+                </>
+              )}
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="w-3 h-3" />
-                {task.dueDate &&
-                  new Date(task.dueDate).toLocaleDateString("th-TH", {
+            {task.dueDate && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar className="w-3 h-3" />
+                  {new Date(task.dueDate).toLocaleDateString("th-TH", {
                     day: "numeric",
                     month: "short",
                   })}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </CardContent>

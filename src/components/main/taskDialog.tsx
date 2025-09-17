@@ -5,7 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Comment, Task } from "@/stores/project-store";
+import { Comment, projectStore, Task, TaskCard } from "@/stores/project-store";
 import { useEffect, useState } from "react";
 import axios from "@/lib/axios";
 import { useStore } from "zustand";
@@ -20,7 +20,7 @@ export default function TaskDialog({
   onOpenChange,
   projectId,
 }: {
-  task: Task | null;
+  task: TaskCard | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: number;
@@ -33,18 +33,40 @@ export default function TaskDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [submitCommentLoading, setSubmitCommentLoading] = useState(false);
+  const setSelectedBoardColumns = useStore(
+    projectStore,
+    (s) => s.setSelectedBoardColumns
+  );
+  const boardSelectedColumns = useStore(
+    projectStore,
+    (s) => s.boardSelectedColumns
+  );
 
   const createTask = async () => {
     try {
       setSubmitLoading(true);
       const res = await axios.post("tasks", editedTask);
-      setEditedTask({
+      const newTask = {
         ...editedTask!,
         id: res.data.id,
         createAt: res.data.createAt,
         updateAt: res.data.updateAt,
         updateBy: res.data.updateBy,
-      });
+      };
+      setEditedTask(newTask);
+      const newCol = [...boardSelectedColumns];
+      const col = newCol.find((col) => col.id === editedTask!.columnId);
+      const newTaskCard: TaskCard = {
+        id: newTask.id,
+        title: newTask.title,
+        description: newTask.description,
+        dueDate: newTask.dueDate,
+        assigneeId: newTask.assigneeId,
+        assigneeName: newTask.assigneeName || null,
+        columnId: newTask.columnId,
+      };
+      col!.tasks = [...(col!.tasks || []), newTaskCard];
+      setSelectedBoardColumns(newCol);
     } catch (err) {
       console.log(err);
     } finally {
@@ -56,13 +78,26 @@ export default function TaskDialog({
     try {
       setSubmitLoading(true);
       const res = await axios.put(`tasks/${editedTask!.id}`, editedTask);
-      setEditedTask({
+      const newEditedTask = {
         ...editedTask!,
         id: res.data.id,
         createAt: res.data.createAt,
         updateAt: res.data.updateAt,
         updateBy: res.data.updateBy,
-      });
+      };
+      setEditedTask(newEditedTask);
+      const newCol = [...boardSelectedColumns];
+      const col = newCol.find((col) => col.id === editedTask!.columnId);
+      const task = col!.tasks!.find((task) => task.id === editedTask!.id);
+      if (task) {
+        task.title = newEditedTask.title;
+        task.description = newEditedTask.description;
+        task.dueDate = newEditedTask.dueDate;
+        task.assigneeId = newEditedTask.assigneeId;
+        task.assigneeName = newEditedTask.assigneeName || null;
+        task.columnId = newEditedTask.columnId;
+      }
+      setSelectedBoardColumns(newCol);
     } catch (err) {
       console.log(err);
     } finally {
@@ -145,7 +180,18 @@ export default function TaskDialog({
       };
       fetchTask();
     } else if (task) {
-      setEditedTask({ ...task });
+      setEditedTask({
+        assigneeId: task.assigneeId,
+        columnId: task.columnId,
+        createAt: null,
+        description: task.description,
+        dueDate: task.dueDate,
+        id: task.id,
+        title: task.title,
+        updateAt: null,
+        updateBy: null,
+        createBy: null,
+      });
     }
   }, [task]);
 

@@ -2,7 +2,6 @@ import { CalendarIcon, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
@@ -27,7 +26,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { format, formatDate } from "date-fns";
 import { UserDdl } from "@/model/userDdl";
-import { Comment, Task } from "@/stores/project-store";
+import { Comment, Task, TaskCard } from "@/stores/project-store";
 import { cn } from "@/lib/utils";
 import { User } from "@/stores/user-store";
 import TaskDialogButton from "@/components/main/taskDialogButton";
@@ -48,7 +47,7 @@ export default function TaskDialogContent({
 }: {
   editedTask: Task | null;
   setEditedTask: (task: Task | null) => void;
-  task: Task | null;
+  task: TaskCard | null;
   comments: Comment[];
   assignees: UserDdl[];
   newComment: string;
@@ -151,6 +150,7 @@ export default function TaskDialogContent({
                         setEditedTask({
                           ...editedTask!,
                           assigneeId: member.id,
+                          assigneeName: member.name,
                         });
                       }
                     }}
