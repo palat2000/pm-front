@@ -1,4 +1,4 @@
-import { CalendarIcon, Send } from "lucide-react";
+import { CalendarIcon, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -26,7 +26,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { format, formatDate } from "date-fns";
 import { UserDdl } from "@/model/userDdl";
-import { Comment, Task, TaskCard } from "@/stores/project-store";
+import { Column, Comment, Task, TaskCard } from "@/stores/project-store";
 import { cn } from "@/lib/utils";
 import { User } from "@/stores/user-store";
 import TaskDialogButton from "@/components/main/taskDialogButton";
@@ -44,6 +44,8 @@ export default function TaskDialogContent({
   user,
   onOpenChange,
   submitLoading,
+  boardSelectedColumns,
+  submitCommentLoading,
 }: {
   editedTask: Task | null;
   setEditedTask: (task: Task | null) => void;
@@ -57,6 +59,8 @@ export default function TaskDialogContent({
   user: User | null;
   onOpenChange: (open: boolean) => void;
   submitLoading: boolean;
+  boardSelectedColumns: Column[];
+  submitCommentLoading: boolean;
 }) {
   return (
     <>
@@ -101,6 +105,36 @@ export default function TaskDialogContent({
             <Card className="h-full">
               <CardContent className="space-y-4 h-full flex flex-col gap-2">
                 <div className="space-y-2 flex-1 lg:flex-none">
+                  <Label htmlFor="column">รายการ</Label>
+                  <Select
+                    value={editedTask?.columnId?.toString()}
+                    onValueChange={(value) => {
+                      setEditedTask({
+                        ...editedTask!,
+                        columnId: Number(value),
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="w-full cursor-pointer">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {boardSelectedColumns.map((col) => (
+                        <SelectItem
+                          key={col.id}
+                          value={col.id.toString()}
+                          className="cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span>{col.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2 flex-1 lg:flex-none">
                   <Label htmlFor="dueDate">วันครบกำหนด</Label>
                   <div className="relative">
                     <Popover>
@@ -108,7 +142,7 @@ export default function TaskDialogContent({
                         <Button
                           variant={"outline"}
                           className={cn(
-                            "w-[240px] pl-3 text-left font-normal",
+                            "w-full pl-3 text-left font-normal",
                             !editedTask?.dueDate && "text-muted-foreground"
                           )}
                         >
@@ -197,7 +231,7 @@ export default function TaskDialogContent({
                     <div key={comment.id} className="flex gap-3">
                       <Avatar className="w-8 h-8">
                         <AvatarFallback className="text-xs">
-                          {comment.name.charAt(0)}
+                          {comment.name.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
@@ -227,7 +261,11 @@ export default function TaskDialogContent({
                       onChange={(e) => setNewComment(e.target.value)}
                     />
                     <Button size="sm" onClick={handleAddComment}>
-                      <Send className="w-4 h-4" />
+                      {submitCommentLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
                     </Button>
                   </div>
                 </div>

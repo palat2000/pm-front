@@ -2,6 +2,7 @@
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -11,42 +12,62 @@ import {
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { useStore } from "zustand";
-import { userStore } from "@/stores/user-store";
 import { useEffect, useState } from "react";
+import { ProjectSelected, projectStore } from "@/stores/project-store";
+import AddProjectDialog from "@/components/main/addProjectDialog";
 import axios from "@/lib/axios";
-import { Project, projectStore } from "@/stores/project-store";
+import { Button } from "@/components/ui/button";
+import { ChevronUp, Plus } from "lucide-react";
+import LoadingSidebar from "@/components/main/loadingSidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import { userStore } from "@/stores/user-store";
+import { Avatar, AvatarFallback } from "../ui/avatar";
+import Cookie from "js-cookie";
+import { useRouter } from "next/navigation";
 
 export default function SidebarApp() {
   const user = useStore(userStore, (s) => s.user);
   const selectProject = useStore(projectStore, (s) => s.selectProject);
   const projectSelected = useStore(projectStore, (s) => s.projectSelected);
-  const [items, setItems] = useState<Project[]>([]);
-  const onSelectProject = (id: number) => {
-    if (projectSelected?.id === id) {
-      return;
-    }
-    const item = items.filter((f) => f.id === id)[0];
-    selectProject(item);
+  const [items, setItems] = useState<ProjectSelected[]>([]);
+  const [openAddProjectDialog, setOpenAddProjectDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const onSelectProject = (project: ProjectSelected) => {
+    selectProject(project);
+  };
+  const onAddProject = async (addProjectForm: {
+    name: string;
+    description: string;
+    color: string;
+  }) => {
+    const res = await axios.post("projects", addProjectForm);
+    setItems((prevItems: ProjectSelected[]) => [...prevItems, res.data]);
+  };
+  const onLogout = () => {
+    Cookie.remove("token");
+    router.push("/login");
   };
 
   useEffect(() => {
-    const fetchItems = async () => {
-      const response = await axios.get("/projects");
-      const projects = response.data.map(
-        (item: any): Project => ({
-          description: item.description,
-          id: item.id,
-          name: item.name,
-          members: item.members,
-          boards: item.boards,
-        })
-      );
-      setItems(projects);
+    const fetchProjects = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get("projects");
+        setItems(response.data);
+      } catch (err) {
+        console.log(err);
+      } finally {
+        setIsLoading(false);
+      }
     };
-    if (user) {
-      fetchItems();
-    }
-  }, [user]);
+    fetchProjects();
+  }, []);
 
   return (
     <Sidebar>
@@ -56,28 +77,79 @@ export default function SidebarApp() {
             <SidebarGroupLabel>Project</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {items.map((item) => (
-                  <SidebarMenuItem
-                    key={item.id}
-                    onClick={() => {
-                      onSelectProject(item.id);
-                    }}
-                    className="cursor-pointer"
-                  >
-                    <SidebarMenuButton
-                      asChild
-                      isActive={item.id === projectSelected?.id}
+                {isLoading ? (
+                  <LoadingSidebar />
+                ) : (
+                  items.map((item) => (
+                    <SidebarMenuItem
+                      key={item.id}
+                      onClick={() => {
+                        onSelectProject(item);
+                      }}
                     >
-                      <span>{item.name}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                      <SidebarMenuButton
+                        isActive={item.id === projectSelected?.id}
+                        className="cursor-pointer"
+                      >
+                        <div
+                          className={`w-3 h-3 rounded-full mr-2`}
+                          style={{ backgroundColor: item.color || "#000000" }}
+                        />
+                        <span>{item.name}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-          <Separator className="my-4" />
+          {!isLoading && (
+            <>
+              <Separator className="mb-4" />
+              <Button
+                className="w-full cursor-pointer"
+                onClick={() => setOpenAddProjectDialog(true)}
+              >
+                <Plus className="w-6 h-6" />
+                เพิ่ม
+              </Button>
+            </>
+          )}
+
+          <AddProjectDialog
+            open={openAddProjectDialog}
+            onChangeOpen={setOpenAddProjectDialog}
+            onAddProject={onAddProject}
+          />
         </div>
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton className="cursor-pointer">
+                  <Avatar>
+                    <AvatarFallback>
+                      {user!.name!.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span>{user!.name}</span>
+                  <ChevronUp className="ml-auto" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                side="top"
+                className="w-[--radix-popper-anchor-width]"
+              >
+                <DropdownMenuItem className="cursor-pointer" onClick={onLogout}>
+                  <span>ออกจากระบบ</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }

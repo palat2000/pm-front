@@ -2,7 +2,8 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/main/sidebarApp";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import HydrateUser from "./hydrate-user";
+import { Toaster } from "@/components/ui/sonner";
+import UserProvider from "@/app/(main)/userProvider";
 
 export default async function MainLayout({
   children,
@@ -18,14 +19,14 @@ export default async function MainLayout({
   }
 
   return (
-    <>
+    <UserProvider>
       <SidebarProvider defaultOpen={defaultOpen}>
         <div className="flex h-screen w-full">
           <AppSidebar />
           {children}
         </div>
       </SidebarProvider>
-      <HydrateUser />
-    </>
+      <Toaster position="top-right" duration={1500} />
+    </UserProvider>
   );
 }

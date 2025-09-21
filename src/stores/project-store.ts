@@ -1,9 +1,28 @@
 import { createStore } from "zustand";
+import { Crown, User } from "lucide-react";
+import { ProjectRole } from "@/enums/role";
+
+export const roleLabels: Map<number, string> = new Map([
+  [ProjectRole.OWNER, "เจ้าของ"],
+  [ProjectRole.MEMBER, "สมาชิก"],
+]);
+
+export const roleIcons: Map<number, any> = new Map([
+  [ProjectRole.OWNER, Crown],
+  [ProjectRole.MEMBER, User],
+]);
+
+export const roleColors: Map<number, string> = new Map([
+  [ProjectRole.OWNER, "bg-yellow-100 text-yellow-800"],
+  [ProjectRole.MEMBER, "bg-gray-100 text-gray-800"],
+]);
 
 export type ProjectMember = {
   id: number;
   userId: number;
-  role: number;
+  role: ProjectRole;
+  name: string;
+  createAt: Date;
 };
 
 export type Comment = {
@@ -59,22 +78,29 @@ export type Project = {
   id: number;
   name: string;
   description: string;
+  color: string;
   members: ProjectMember[];
   boards: Board[];
 };
 
+export type ProjectSelected = Project & {
+  userRole: ProjectRole;
+};
+
 export type ProjectState = {
-  projectSelected: Project | null;
+  projectSelected: ProjectSelected | null;
   boards: Board[];
   boardSelected: Board | null;
   boardSelectedColumns: Column[];
 };
 
 export type ProjectActions = {
-  selectProject: (project: Project) => void;
-  selectBoard: (board: Board) => void;
+  selectProject: (project: ProjectSelected) => void;
+  selectBoard: (board: Board | null) => void;
   setSelectedBoardColumns: (columns: Column[]) => void;
   setBoards: (boards: Board[]) => void;
+  addMember: (member: ProjectMember) => void;
+  removeMember: (member: ProjectMember) => void;
 };
 
 export type ProjectStore = ProjectState & ProjectActions;
@@ -84,10 +110,27 @@ export const projectStore = createStore<ProjectStore>()((set) => ({
   boards: [],
   boardSelected: null,
   boardSelectedColumns: [],
-  selectProject: (project: Project) =>
+  selectProject: (project: ProjectSelected) =>
     set(() => ({ projectSelected: { ...project } })),
-  selectBoard: (board: Board) => set(() => ({ boardSelected: { ...board } })),
+  selectBoard: (board: Board | null) =>
+    set(() => ({ boardSelected: board ? { ...board } : null })),
   setSelectedBoardColumns: (columns: Column[]) =>
     set(() => ({ boardSelectedColumns: columns })),
   setBoards: (boards: Board[]) => set(() => ({ boards: boards })),
+  addMember: (member: ProjectMember) =>
+    set((state) => ({
+      projectSelected: {
+        ...state.projectSelected!,
+        members: [...state.projectSelected!.members, member],
+      },
+    })),
+  removeMember: (member: ProjectMember) =>
+    set((state) => ({
+      projectSelected: {
+        ...state.projectSelected!,
+        members: state.projectSelected!.members.filter(
+          (m) => m.userId !== member.userId
+        ),
+      },
+    })),
 }));

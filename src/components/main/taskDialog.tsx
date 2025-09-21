@@ -44,6 +44,7 @@ export default function TaskDialog({
 
   const createTask = async () => {
     try {
+      if (!editedTask?.title?.trim() || editedTask.columnId === 0) return;
       setSubmitLoading(true);
       const res = await axios.post("tasks", editedTask);
       const newTask = {
@@ -65,7 +66,20 @@ export default function TaskDialog({
         assigneeName: newTask.assigneeName || null,
         columnId: newTask.columnId,
       };
-      col!.tasks = [...(col!.tasks || []), newTaskCard];
+      col!.tasks = [...(col!.tasks || []), newTaskCard].sort((a, b) => {
+        if (!a.dueDate && !b.dueDate) return 0;
+        if (!a.dueDate) return 1; // place nulls last
+        if (!b.dueDate) return -1;
+        const ta =
+          a.dueDate instanceof Date
+            ? a.dueDate.getTime()
+            : new Date(a.dueDate).getTime();
+        const tb =
+          b.dueDate instanceof Date
+            ? b.dueDate.getTime()
+            : new Date(b.dueDate).getTime();
+        return ta - tb;
+      });
       setSelectedBoardColumns(newCol);
     } catch (err) {
       console.log(err);
@@ -76,6 +90,7 @@ export default function TaskDialog({
 
   const updateTask = async () => {
     try {
+      if (!editedTask?.title?.trim()) return;
       setSubmitLoading(true);
       const res = await axios.put(`tasks/${editedTask!.id}`, editedTask);
       const newEditedTask = {
@@ -87,15 +102,33 @@ export default function TaskDialog({
       };
       setEditedTask(newEditedTask);
       const newCol = [...boardSelectedColumns];
-      const col = newCol.find((col) => col.id === editedTask!.columnId);
-      const task = col!.tasks!.find((task) => task.id === editedTask!.id);
-      if (task) {
-        task.title = newEditedTask.title;
-        task.description = newEditedTask.description;
-        task.dueDate = newEditedTask.dueDate;
-        task.assigneeId = newEditedTask.assigneeId;
-        task.assigneeName = newEditedTask.assigneeName || null;
-        task.columnId = newEditedTask.columnId;
+      for (let c of newCol) {
+        c.tasks = c.tasks?.filter((task) => task.id !== editedTask!.id);
+        if (c.id === editedTask!.columnId) {
+          const newTaskCard: TaskCard = {
+            id: newEditedTask.id,
+            title: newEditedTask.title,
+            description: newEditedTask.description,
+            dueDate: newEditedTask.dueDate,
+            assigneeId: newEditedTask.assigneeId,
+            assigneeName: newEditedTask.assigneeName || null,
+            columnId: newEditedTask.columnId,
+          };
+          c.tasks = [...(c.tasks || []), newTaskCard].sort((a, b) => {
+            if (!a.dueDate && !b.dueDate) return 0;
+            if (!a.dueDate) return -1;
+            if (!b.dueDate) return 1;
+            const ta =
+              a.dueDate instanceof Date
+                ? a.dueDate.getTime()
+                : new Date(a.dueDate).getTime();
+            const tb =
+              b.dueDate instanceof Date
+                ? b.dueDate.getTime()
+                : new Date(b.dueDate).getTime();
+            return ta - tb;
+          });
+        }
       }
       setSelectedBoardColumns(newCol);
     } catch (err) {
@@ -236,6 +269,8 @@ export default function TaskDialog({
             user={user}
             onOpenChange={onOpenChange}
             submitLoading={submitLoading}
+            boardSelectedColumns={boardSelectedColumns}
+            submitCommentLoading={submitCommentLoading}
           />
         )}
       </DialogContent>

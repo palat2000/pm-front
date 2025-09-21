@@ -1,26 +1,32 @@
 "use client";
-import DroppableColumn from "@/components/main/droppableColumn";
-import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Plus, Users } from "lucide-react";
 import { useStore } from "zustand";
 import { useEffect } from "react";
-import { Column, projectStore, TaskCard } from "@/stores/project-store";
+import { projectStore, TaskCard } from "@/stores/project-store";
 import { useState } from "react";
 import axios from "@/lib/axios";
 import TaskDialog from "@/components/main/taskDialog";
+import ProjectMemberDialog from "@/components/main/projectMemberDialog";
+import ColumnDialog from "@/components/main/columnDialog";
+import HomePlaceHolder from "@/components/main/homePlaceHolder";
+import ProjectIndex from "@/components/main/projectIndex";
+import AddBoardDialog from "@/components/main/addBoardDialog";
 
 export default function Page() {
   const projectSelected = useStore(projectStore, (s) => s.projectSelected);
+  const selectBoard = useStore(projectStore, (s) => s.selectBoard);
+  const boardSelected = useStore(projectStore, (s) => s.boardSelected);
   const setSelectedBoardColumns = useStore(
     projectStore,
     (s) => s.setSelectedBoardColumns
   );
-  const columns = useStore(projectStore, (s) => s.boardSelectedColumns);
   const [taskSelected, setTaskSelected] = useState<TaskCard | null>(
     {} as TaskCard
   );
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false);
+  const [isColumnDialogOpen, setIsColumnDialogOpen] = useState(false);
+  const [isAddBoardDialogOpen, setIsAddBoardDialogOpen] = useState(false);
   const onSelectTask = (task: TaskCard) => {
     setIsTaskDialogOpen(true);
     setTaskSelected(task);
@@ -28,15 +34,31 @@ export default function Page() {
 
   useEffect(() => {
     if (projectSelected) {
-      const board = projectSelected.boards[0];
+      selectBoard(null);
+      setSelectedBoardColumns([]);
+      if (projectSelected.boards.length > 0) {
+        const board = projectSelected.boards[0];
+        selectBoard(board);
+        const fetchColumns = async () => {
+          const response = await axios.get(`/columns/board/${board.id}`);
+          const columns = response.data;
+          setSelectedBoardColumns(columns);
+        };
+        fetchColumns();
+      }
+    }
+  }, [projectSelected]);
+
+  useEffect(() => {
+    if (boardSelected) {
       const fetchColumns = async () => {
-        const response = await axios.get(`/columns/board/${board.id}`);
+        const response = await axios.get(`/columns/board/${boardSelected.id}`);
         const columns = response.data;
         setSelectedBoardColumns(columns);
       };
       fetchColumns();
     }
-  }, [projectSelected]);
+  }, [boardSelected]);
 
   return (
     <>
@@ -48,36 +70,16 @@ export default function Page() {
           </div>
         </div>
 
-        <div className="space-y-6 flex flex-col flex-1">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl mb-2">{projectSelected?.name}</h2>
-              <p className="text-muted-foreground">
-                {projectSelected?.description}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" className="cursor-pointer">
-                <Users className="w-4 h-4 mr-2" />
-                สมาชิก ({projectSelected?.members?.length})
-              </Button>
-              <Button className="cursor-pointer">
-                <Plus className="w-6 h-6" />
-              </Button>
-            </div>
-          </div>
-          <div className="flex-1 overflow-auto">
-            <div className="flex gap-6 h-full">
-              {columns.map((col) => (
-                <DroppableColumn
-                  key={col.id}
-                  column={col}
-                  onSelectTask={onSelectTask}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
+        {!projectSelected ? (
+          <HomePlaceHolder />
+        ) : (
+          <ProjectIndex
+            setIsMemberDialogOpen={setIsMemberDialogOpen}
+            setIsColumnDialogOpen={setIsColumnDialogOpen}
+            onSelectTask={onSelectTask}
+            setIsAddBoardDialogOpen={setIsAddBoardDialogOpen}
+          />
+        )}
       </main>
 
       <TaskDialog
@@ -85,6 +87,21 @@ export default function Page() {
         open={isTaskDialogOpen}
         onOpenChange={setIsTaskDialogOpen}
         projectId={projectSelected?.id || 0}
+      />
+
+      <ProjectMemberDialog
+        open={isMemberDialogOpen}
+        onOpenChange={setIsMemberDialogOpen}
+      />
+
+      <ColumnDialog
+        open={isColumnDialogOpen}
+        onOpenChange={setIsColumnDialogOpen}
+      />
+
+      <AddBoardDialog
+        open={isAddBoardDialogOpen}
+        onOpenChange={setIsAddBoardDialogOpen}
       />
     </>
   );

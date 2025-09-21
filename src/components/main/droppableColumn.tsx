@@ -42,27 +42,6 @@ export default function DroppableColumn({
           ))}
         </CardContent>
       )}
-      <Separator className="my-1" />
-      <CardFooter>
-        <Button
-          variant="ghost"
-          className="cursor-pointer flex-1"
-          onClick={() =>
-            onSelectTask({
-              id: 0,
-              assigneeId: null,
-              assigneeName: "",
-              columnId: column.id,
-              description: "",
-              dueDate: null,
-              title: "",
-            })
-          }
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          เพิ่มการ์ด
-        </Button>
-      </CardFooter>
     </Card>
   );
 }

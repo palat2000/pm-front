@@ -23,6 +23,7 @@ const registerSchema = loginSchema
   .extend({
     username: z.string().min(3, "ชื่อผู้ใช้ต้องมีอย่างน้อย 3 ตัวอักษร"),
     confirmPassword: z.string().min(4, "ยืนยันรหัสผ่าน"),
+    name: z.string().min(3, "ชื่อต้องมีอย่างน้อย 3 ตัวอักษร"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "รหัสผ่านไม่ตรงกัน",
@@ -66,7 +67,7 @@ export default function Page() {
       setFormError("");
 
       if (isRegister && isRegisterForm(data)) {
-        const res = await axios.post("/api/register", data);
+        const res = await axios.post("/users/auth/register", data);
         setToken(res.data.token, res.data.expiresIn);
         router.push("/");
       } else {
@@ -138,6 +139,27 @@ export default function Page() {
                 </p>
               )}
             </div>
+
+            {isRegister && (
+              <div className="space-y-1.5">
+                <Label htmlFor="name">ชื่อ</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  {...register("name" as const)}
+                  className={cn({
+                    "border-destructive focus-visible:ring-destructive/50":
+                      "name" in errors && errors.name,
+                  })}
+                  disabled={isLoading}
+                />
+                {"name" in errors && errors.name && (
+                  <p className="text-xs text-destructive">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <Label htmlFor="password">รหัสผ่าน</Label>
